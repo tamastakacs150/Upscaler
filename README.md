@@ -83,7 +83,7 @@ pip install -r requirements.txt
 
 cd frontend
 npm install
-npm run build                    # type-checks, then writes to static/app
+npm run build                    # type-checks, then writes straight to static/app
 cd ..
 
 python app.py                    # serves on http://localhost:7860
@@ -112,6 +112,9 @@ memory at once; a smaller tile processes the image in pieces, which is slower bu
 
 ## Known limitations
 
+- **The served UI is a build artifact.** `static/app/` is what Flask serves and is not tracked
+  in git, so after changing anything under `frontend/src` you have to run `npm run build` again
+  or the running app keeps showing the previous build.
 - **Requests are handled synchronously.** A large batch blocks the worker until it finishes, and
   there is no job queue or progress reporting. This is the next thing worth rewriting — the
   start/poll split I used for video generation in another project would fit here.

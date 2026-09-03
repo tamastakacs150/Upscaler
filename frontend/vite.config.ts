@@ -8,6 +8,12 @@ export default defineConfig({
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
   },
+  build: {
+    // A Flask a static/app alol szolgalja ki az SPA-t (app.py), ezert
+    // kozvetlenul oda epitunk - kulon masolasi lepes nelkul.
+    outDir: path.resolve(__dirname, '../static/app'),
+    emptyOutDir: true,
+  },
   server: {
     port: 5173,
     proxy: {
