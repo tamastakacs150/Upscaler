@@ -2,6 +2,7 @@ from flask import Flask, request, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 import os, uuid
 from process import upscale_batch
+from storage import cleanup_old_batches
 
 _OPENCV_BIN = os.environ.get("OPENCV_BIN", r"C:\Users\takit\Desktop\opencv\build\x64\vc16\bin")
 if _OPENCV_BIN and os.path.isdir(_OPENCV_BIN):
@@ -13,6 +14,9 @@ OUTPUT_DIR = os.path.join(BASE_DIR, "outputs")
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+# Indulaskor takaritunk, hogy a regi batchek ne gyuljenek a vegtelensegig
+cleanup_old_batches([UPLOAD_DIR, OUTPUT_DIR])
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024 * 1024  # 1GB
@@ -35,6 +39,9 @@ def api_upscale():
     files = request.files.getlist("images")
     if not files:
         return jsonify({"ok": False, "error": "No files uploaded"}), 400
+
+    # Minden keresnel takaritunk egyet, igy a mappak nem nonek korlatlanul
+    cleanup_old_batches([UPLOAD_DIR, OUTPUT_DIR])
 
     batch_id = str(uuid.uuid4())[:8]
     up_dir = os.path.join(UPLOAD_DIR, batch_id)
