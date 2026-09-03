@@ -1,0 +1,28 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+
+# Built SPA (regenerate: cd frontend && npm install && npm run build)
+static/
+
+# Runtime data
+uploads/
+outputs/
+*.log
+
+# Vendored binaries and model weights (download separately, see README)
+*.exe
+*.dll
+realesrgan/models/
+gfpgan/models/
+
+# Windows
+*.lnk
+Thumbs.db
+desktop.ini

@@ -1,0 +1,184 @@
+/* Tailwind v4 stílusok betöltése */
+@import "tailwindcss";
+
+/* Ha használsz animációs utilokat */
+@plugin "tailwindcss-animate";
+
+/* =========================
+   Alapszínek (HSL komponensek)
+   ========================= */
+:root {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 98%;
+
+  --card: 0 0% 5%;
+  --card-foreground: 0 0% 98%;
+
+  --popover: 0 0% 5%;
+  --popover-foreground: 0 0% 98%;
+
+  --primary: 0 0% 98%;
+  --primary-foreground: 0 0% 9%;
+
+  --secondary: 0 0% 8%;
+  --secondary-foreground: 0 0% 98%;
+
+  --muted: 0 0% 8%;
+  --muted-foreground: 0 0% 64%;
+
+  --accent: 0 0% 90%;
+  --accent-foreground: 0 0% 9%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 0 0% 14%;
+  --input: 0 0% 14%;
+  --ring: 0 0% 83%;
+
+  --radius: 0.75rem;
+
+  /* Extra tokenek (ha használod) */
+  --upload-bg: 0 0% 5%;
+  --upload-border: 0 0% 12%;
+  --upload-hover: 0 0% 8%;
+
+  --sidebar-background: 0 0% 98%;
+  --sidebar-foreground: 240 5.3% 26.1%;
+  --sidebar-primary: 240 5.9% 10%;
+  --sidebar-primary-foreground: 0 0% 98%;
+  --sidebar-accent: 240 4.8% 95.9%;
+  --sidebar-accent-foreground: 240 5.9% 10%;
+  --sidebar-border: 220 13% 91%;
+  --sidebar-ring: 217.2 91.2% 59.8%;
+}
+
+.dark {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 98%;
+
+  --card: 0 0% 5%;
+  --card-foreground: 0 0% 98%;
+
+  --popover: 0 0% 5%;
+  --popover-foreground: 0 0% 98%;
+
+  --primary: 0 0% 98%;
+  --primary-foreground: 0 0% 9%;
+
+  --secondary: 0 0% 8%;
+  --secondary-foreground: 0 0% 98%;
+
+  --muted: 0 0% 8%;
+  --muted-foreground: 0 0% 64%;
+
+  --accent: 0 0% 10%;
+  --accent-foreground: 0 0% 98%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 0 0% 14%;
+  --input: 0 0% 14%;
+  --ring: 0 0% 83%;
+
+  --sidebar-background: 0 0% 5%;
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-primary: 0 0% 98%;
+  --sidebar-primary-foreground: 0 0% 9%;
+  --sidebar-accent: 0 0% 10%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-border: 0 0% 14%;
+  --sidebar-ring: 0 0% 83%;
+}
+
+/* =========================
+   Token mapping Tailwind utilokhoz
+   ========================= */
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --radius: var(--radius);
+
+  /* Sidebar tokenek (ha kell) */
+  --color-sidebar-background: hsl(var(--sidebar-background));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+}
+
+/* =========================
+   Alap reset + body
+   ========================= */
+* {
+  border-color: hsl(var(--border));
+}
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* =========================
+   Egyedi util „osztályok”
+   (nem @apply, hanem natív CSS)
+   ========================= */
+.elegant-text {
+  color: hsl(var(--foreground));
+  font-weight: 300;        /* font-light helyett */
+  letter-spacing: -0.01em; /* tracking-tight közelítése */
+}
+
+.elegant-shadow {
+  /* világos/sötét árnyék */
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+.dark .elegant-shadow {
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
+
+.elegant-border {
+  border-width: 1px;
+  border-color: color-mix(in oklab, hsl(var(--border)) 50%, transparent);
+}
+
+.upload-zone {
+  background-color: hsl(var(--upload-bg));
+  border: 2px dashed hsl(var(--upload-border));
+  border-radius: 1rem;     /* ~ rounded-2xl */
+  transition-property: all;
+  transition-duration: 500ms;
+}
+
+.upload-zone-hover {
+  background-color: hsl(var(--upload-hover));
+  border-color: color-mix(in oklab, hsl(var(--foreground)) 30%, transparent);
+  transform: scale(1.01);
+}
+
+.minimal-gradient {
+  background-image: linear-gradient(to bottom right, hsl(var(--background)), hsl(var(--muted)));
+}
