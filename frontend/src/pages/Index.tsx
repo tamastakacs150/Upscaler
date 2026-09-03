@@ -17,6 +17,21 @@ interface UpscaleFailure {
   error: string;
 }
 
+// Ugyanaz a lista, amit a szerver is elfogad (app.py: ALLOWED)
+const ALLOWED_EXT = [".jpg", ".jpeg", ".png", ".webp", ".bmp"];
+
+function splitBySupportedFormat(files: File[]) {
+  const accepted: File[] = [];
+  const rejected: string[] = [];
+  for (const f of files) {
+    const dot = f.name.lastIndexOf(".");
+    const ext = dot >= 0 ? f.name.slice(dot).toLowerCase() : "";
+    if (ALLOWED_EXT.includes(ext)) accepted.push(f);
+    else rejected.push(f.name);
+  }
+  return { accepted, rejected };
+}
+
 const Index = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [scale, setScale] = useState("4");
@@ -39,30 +54,38 @@ const Index = () => {
     setIsDragging(false);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const files = Array.from(e.dataTransfer.files).filter(file => 
-      file.type.startsWith("image/")
-    );
-    if (files.length > 0) {
-      setSelectedFiles(files);
+  const acceptFiles = (files: File[]) => {
+    const { accepted, rejected } = splitBySupportedFormat(files);
+
+    if (accepted.length > 0) {
+      setSelectedFiles(accepted);
+      setFailures([]);
+    }
+
+    if (rejected.length > 0) {
+      toast({
+        title: rejected.length === 1 ? "1 fájl kimaradt" : `${rejected.length} fájl kimaradt`,
+        description: `Nem támogatott formátum: ${rejected.join(", ")}. Használható: JPG, PNG, WebP, BMP.`,
+        variant: "destructive",
+      });
+    } else if (accepted.length > 0) {
       toast({
         title: "Files selected",
-        description: `${files.length} image(s) ready to upscale`,
+        description: `${accepted.length} image(s) ready to upscale`,
       });
     }
   };
 
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    acceptFiles(Array.from(e.dataTransfer.files));
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length > 0) {
-      setSelectedFiles(files);
-      toast({
-        title: "Files selected",
-        description: `${files.length} image(s) ready to upscale`,
-      });
-    }
+    acceptFiles(Array.from(e.target.files || []));
+    // ugyanazt a fajlt ujra ki lehessen valasztani
+    e.target.value = "";
   };
 
   async function handleUpscale() {
@@ -257,13 +280,13 @@ const Index = () => {
               }
             </h3>
             <p className="text-sm text-muted-foreground font-light">
-              JPG, PNG, WebP • Multiple files supported
+              JPG, PNG, WebP, BMP • Multiple files supported
             </p>
             <input
               ref={fileInputRef}
               type="file"
               multiple
-              accept="image/*"
+              accept=".jpg,.jpeg,.png,.webp,.bmp"
               onChange={handleFileSelect}
               className="hidden"
             />
