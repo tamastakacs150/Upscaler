@@ -21,6 +21,7 @@ const Index = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [scale, setScale] = useState("4");
   const [model, setModel] = useState("realesrgan-x4plus");
+  const [tile, setTile] = useState("0");
   const [faceEnhance, setFaceEnhance] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -81,6 +82,7 @@ const Index = () => {
     fd.append("scale", String(scl));
     fd.append("model", model);
     fd.append("face", faceEnhance ? "1" : "0");
+    fd.append("tile", tile);
 
     try {
       const res = await fetch("/api/upscale", { method: "POST", body: fd });
@@ -164,7 +166,7 @@ const Index = () => {
               </h2>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="space-y-3">
                 <Label htmlFor="scale" className="text-sm font-light text-foreground/80">
                   Scale Factor
@@ -195,6 +197,25 @@ const Index = () => {
                     <SelectItem value="realesrnet-x4plus">RealESRNet</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-3">
+                <Label htmlFor="tile" className="text-sm font-light text-foreground/80">
+                  Tile Size
+                </Label>
+                <Select value={tile} onValueChange={setTile}>
+                  <SelectTrigger id="tile" className="bg-secondary/50 border-border/50 h-11">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Auto</SelectItem>
+                    <SelectItem value="512">512 – less VRAM</SelectItem>
+                    <SelectItem value="256">256 – least VRAM</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground font-light">
+                  Kisebb csempe kevesebb GPU-memóriát használ, cserébe lassabb.
+                </p>
               </div>
 
               <div className="flex items-end">
