@@ -1,7 +1,7 @@
 from flask import Flask, request, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 import os, uuid
-from process import upscale_batch
+from process import upscale_batch, available_models, gfpgan_available
 from storage import cleanup_old_batches
 
 _OPENCV_BIN = os.environ.get("OPENCV_BIN", r"C:\Users\takit\Desktop\opencv\build\x64\vc16\bin")
@@ -24,6 +24,28 @@ app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024 * 1024  # 1GB
 ALLOWED = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 
 # ---------- API ----------
+MODEL_LABELS = {
+    "realesrgan-x4plus": "General Purpose",
+    "realesrgan-x4plus-anime": "Anime & Art",
+    "realesr-animevideov3-x4": "Anime Video",
+    "realesr-animevideov3-x3": "Anime Video (x3 native)",
+    "realesr-animevideov3-x2": "Anime Video (x2 native)",
+    "realesrnet-x4plus": "RealESRNet",
+}
+
+
+@app.get("/api/models")
+def api_models():
+    """Csak azokat a modelleket kinaljuk fel, amiknek a fajljai tenyleg megvannak."""
+    face_ok, face_why = gfpgan_available()
+    return jsonify({
+        "models": [{"id": m, "label": MODEL_LABELS.get(m, m)} for m in available_models()],
+        "faceEnhanceAvailable": face_ok,
+        "faceEnhanceReason": face_why,
+    })
+
+
+
 @app.post("/api/upscale")
 def api_upscale():
     scale = int(request.form.get("scale", "4"))

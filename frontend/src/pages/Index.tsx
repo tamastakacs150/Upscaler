@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Upload, Download, ImagePlus, Sliders } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -37,6 +37,9 @@ const Index = () => {
   const [scale, setScale] = useState("4");
   const [model, setModel] = useState("realesrgan-x4plus");
   const [tile, setTile] = useState("0");
+  const [models, setModels] = useState<{ id: string; label: string }[]>([]);
+  const [faceAvailable, setFaceAvailable] = useState(true);
+  const [faceReason, setFaceReason] = useState<string | null>(null);
   const [faceEnhance, setFaceEnhance] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -75,6 +78,27 @@ const Index = () => {
       });
     }
   };
+
+  // Csak azokat a modelleket kinaljuk, amiknek a fajljai megvannak a szerveren
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/models")
+      .then(r => r.json())
+      .then((d: { models?: { id: string; label: string }[]; faceEnhanceAvailable?: boolean; faceEnhanceReason?: string | null }) => {
+        if (!alive) return;
+        const list = d.models ?? [];
+        setModels(list);
+        if (list.length && !list.some(m => m.id === model)) setModel(list[0].id);
+        if (d.faceEnhanceAvailable === false) {
+          setFaceAvailable(false);
+          setFaceReason(d.faceEnhanceReason ?? null);
+          setFaceEnhance(false);
+        }
+      })
+      .catch(() => { /* offline: marad a beepitett lista */ });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -215,9 +239,12 @@ const Index = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="realesrgan-x4plus">General Purpose</SelectItem>
-                    <SelectItem value="realesrgan-x4plus-anime">Anime & Art</SelectItem>
-                    <SelectItem value="realesrnet-x4plus">RealESRNet</SelectItem>
+                    {(models.length
+                      ? models
+                      : [{ id: "realesrgan-x4plus", label: "General Purpose" }]
+                    ).map(m => (
+                      <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -246,11 +273,16 @@ const Index = () => {
                   <Checkbox 
                     id="face" 
                     checked={faceEnhance}
+                    disabled={!faceAvailable}
                     onCheckedChange={(checked) => setFaceEnhance(checked as boolean)}
                     className="border-border/50"
                   />
-                  <Label htmlFor="face" className="cursor-pointer text-sm font-light text-foreground/80">
-                    Face Enhancement
+                  <Label
+                    htmlFor="face"
+                    title={faceReason ?? undefined}
+                    className={`text-sm font-light ${faceAvailable ? "cursor-pointer text-foreground/80" : "cursor-not-allowed text-muted-foreground"}`}
+                  >
+                    Face Enhancement{faceAvailable ? "" : " (modell hiányzik)"}
                   </Label>
                 </div>
               </div>
