@@ -12,6 +12,11 @@ interface UpscaleResult {
   filename: string;
 }
 
+interface UpscaleFailure {
+  source: string;
+  error: string;
+}
+
 const Index = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [scale, setScale] = useState("4");
@@ -20,6 +25,7 @@ const Index = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [results, setResults] = useState<UpscaleResult[]>([]);
+  const [failures, setFailures] = useState<UpscaleFailure[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -61,6 +67,7 @@ const Index = () => {
   async function handleUpscale() {
     if (selectedFiles.length === 0) return;
     setIsProcessing(true);
+    setFailures([]);
 
     const fd = new FormData();
 
@@ -80,13 +87,53 @@ const Index = () => {
       const text = await res.text();
       if (!res.ok) throw new Error(`HTTP ${res.status} – ${text || "nincs üzenet"}`);
 
-      // 3) A backend { ok, results: [...] }-t ad vissza
-      const payload = JSON.parse(text) as { ok: boolean; results: { url: string; filename: string }[] };
-      const list = Array.isArray(payload) ? payload : payload.results;
+      // 3) A backend képenként jelzi, hogy sikerült-e
+      type ApiItem = {
+        source: string;
+        ok: boolean;
+        error?: string | null;
+        url?: string;
+        filename?: string;
+      };
+      const payload = JSON.parse(text) as { ok: boolean; results: ApiItem[] };
+      const list = payload.results ?? [];
 
       const ts = Date.now();
-      setResults(list.map(d => ({ ...d, url: `${d.url}?t=${ts}` })));
-      toast({ title: "Upscaling kész!", description: `${list.length} kép feldolgozva.` });
+      const done = list.filter(d => d.ok && d.url);
+      const bad = list.filter(d => !d.ok);
+
+      setResults(done.map(d => ({
+        url: `${d.url}?t=${ts}`,
+        filename: d.filename ?? d.source,
+      })));
+      setFailures(bad.map(d => ({
+        source: d.source,
+        error: d.error ?? "Ismeretlen hiba.",
+      })));
+
+      // Az arcjavítás külön hibázhat úgy is, hogy a felnagyítás sikerült
+      const warned = list.filter(d => d.ok && d.error);
+
+      if (bad.length === 0) {
+        toast({
+          title: "Upscaling kész!",
+          description: warned.length
+            ? `${done.length} kép feldolgozva, ${warned.length} figyelmeztetéssel.`
+            : `${done.length} kép feldolgozva.`,
+        });
+      } else if (done.length === 0) {
+        toast({
+          title: "Egyik kép sem sikerült",
+          description: bad[0].error ?? "Nézd meg az upscale.log fájlt.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: `${done.length} kész, ${bad.length} hibás`,
+          description: "A hibás képek a lista alatt vannak felsorolva.",
+          variant: "destructive",
+        });
+      }
     } catch (e: any) {
       toast({ title: "Hiba az upscalingnél", description: e.message, variant: "destructive" });
     } finally {
@@ -224,6 +271,25 @@ const Index = () => {
         </div>
 
         {/* Results Grid */}
+        {failures.length > 0 && (
+          <div className="mb-8 animate-fade-in">
+            <h2 className="text-lg font-light mb-3 text-destructive tracking-tight">
+              {failures.length === 1 ? "1 kép nem sikerült" : `${failures.length} kép nem sikerült`}
+            </h2>
+            <ul className="rounded-lg border border-destructive/30 bg-destructive/5 divide-y divide-destructive/15">
+              {failures.map((f, idx) => (
+                <li key={idx} className="px-4 py-3">
+                  <p className="text-sm font-medium text-foreground truncate">{f.source}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 break-words">{f.error}</p>
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-muted-foreground mt-2 font-light">
+              A részletes kimenet az upscale.log fájlban van.
+            </p>
+          </div>
+        )}
+
         {results.length > 0 && (
           <div className="animate-fade-in">
             <h2 className="text-2xl font-light mb-8 text-foreground tracking-tight">

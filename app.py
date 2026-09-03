@@ -26,6 +26,11 @@ def api_upscale():
     model = request.form.get("model", "realesrgan-x4plus")
     # frontend "face" mezője "true"/"false" string, alakítsuk bool-lá:
     face_enhance = str(request.form.get("face", "false")).lower() in ("1", "true", "on", "yes")
+    # csempeméret: 0 = a bináris dönt. Kisebb érték kevesebb GPU-memóriát használ.
+    try:
+        tile = max(0, int(request.form.get("tile", "0")))
+    except ValueError:
+        tile = 0
 
     files = request.files.getlist("images")
     if not files:
@@ -38,32 +43,50 @@ def api_upscale():
     os.makedirs(out_dir, exist_ok=True)
 
     paths = []
+    skipped = []
     for f in files:
         name = secure_filename(f.filename)
         ext = os.path.splitext(name)[1].lower()
         if ext not in ALLOWED:
+            skipped.append({"source": f.filename, "ok": False,
+                            "error": f"Nem tamogatott formatum: {ext or 'ismeretlen'}"})
             continue
         p = os.path.join(up_dir, name)
         f.save(p)
         paths.append(p)
 
     if not paths:
-        return jsonify({"ok": False, "error": "No valid images"}), 400
+        return jsonify({"ok": False, "error": "No valid images", "results": skipped}), 400
 
     outs = upscale_batch(
         input_paths=paths,
         output_dir=out_dir,
         scale=scale,
         model_name=model,
-        face_enhance=face_enhance
+        face_enhance=face_enhance,
+        tile=tile
     )
 
-    payload = [{
-        "url": f"/outputs/{batch_id}/{os.path.basename(x)}",
-        "filename": os.path.basename(x)
-    } for x in outs]
+    results = list(skipped)
+    for r in outs:
+        item = {
+            "source": r["source"],
+            "ok": r["ok"],
+            "error": r["error"],
+            "faceEnhanced": r["face_enhanced"],
+        }
+        if r["ok"] and r["path"]:
+            item["filename"] = os.path.basename(r["path"])
+            item["url"] = f"/outputs/{batch_id}/{os.path.basename(r['path'])}"
+        results.append(item)
 
-    return jsonify({"ok": True, "results": payload})
+    succeeded = sum(1 for r in results if r["ok"])
+    return jsonify({
+        "ok": succeeded > 0,
+        "succeeded": succeeded,
+        "failed": len(results) - succeeded,
+        "results": results,
+    })
 
 @app.get("/outputs/<path:path>")
 def serve_outputs(path):
