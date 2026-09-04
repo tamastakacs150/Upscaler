@@ -19,6 +19,12 @@ outputs/
 # Vendored binaries and model weights (download separately, see README)
 *.exe
 *.dll
+# Az upstream ncnn kiadas demo-anyagai, nem a projekt resze
+realesrgan/input*.jpg
+realesrgan/onepiece_demo.mp4
+realesrgan/README_*
+realesrgan/LICENSE_*
+
 realesrgan/models/
 gfpgan/models/
 gfpgan/
