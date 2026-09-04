@@ -1,7 +1,7 @@
 from flask import Flask, request, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 import os, uuid
-from process import upscale_batch, available_models, gfpgan_available
+from process import upscale_batch, available_models, gfpgan_available, native_scale
 from storage import cleanup_old_batches
 
 _OPENCV_BIN = os.environ.get("OPENCV_BIN", r"C:\Users\takit\Desktop\opencv\build\x64\vc16\bin")
@@ -24,14 +24,15 @@ app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024 * 1024  # 1GB
 ALLOWED = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 
 # ---------- API ----------
+# A sorrend a legordulot is meghatarozza: eloszor a fotokhoz valo modellek.
 MODEL_LABELS = {
-    "realesrgan-x4plus": "General Purpose",
-    "realesrgan-x4plus-anime": "Anime & Art",
-    "realesr-animevideov3-x4": "Anime Video",
-    "realesr-animevideov3-x3": "Anime Video (x3 native)",
-    "realesr-animevideov3-x2": "Anime Video (x2 native)",
-    "realesrnet-x4plus": "RealESRNet",
+    "realesrgan-x4plus": "General Purpose — photos (4x)",
+    "realesrgan-x4plus-anime": "Anime & Art — illustration (4x)",
+    "realesr-animevideov3-x4": "Anime Video — fast, less detail (4x)",
+    "realesr-animevideov3-x3": "Anime Video — fast, less detail (3x)",
+    "realesr-animevideov3-x2": "Anime Video — fast, less detail (2x)",
 }
+MODEL_ORDER = list(MODEL_LABELS)
 
 
 @app.get("/api/models")
@@ -39,7 +40,11 @@ def api_models():
     """Csak azokat a modelleket kinaljuk fel, amiknek a fajljai tenyleg megvannak."""
     face_ok, face_why = gfpgan_available()
     return jsonify({
-        "models": [{"id": m, "label": MODEL_LABELS.get(m, m)} for m in available_models()],
+        "models": [
+            {"id": m, "label": MODEL_LABELS.get(m, m), "nativeScale": native_scale(m)}
+            for m in sorted(available_models(),
+                            key=lambda m: (MODEL_ORDER.index(m) if m in MODEL_ORDER else 99, m))
+        ],
         "faceEnhanceAvailable": face_ok,
         "faceEnhanceReason": face_why,
     })

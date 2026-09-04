@@ -37,7 +37,7 @@ const Index = () => {
   const [scale, setScale] = useState("4");
   const [model, setModel] = useState("realesrgan-x4plus");
   const [tile, setTile] = useState("0");
-  const [models, setModels] = useState<{ id: string; label: string }[]>([]);
+  const [models, setModels] = useState<{ id: string; label: string; nativeScale?: number }[]>([]);
   const [faceAvailable, setFaceAvailable] = useState(true);
   const [faceReason, setFaceReason] = useState<string | null>(null);
   const [faceEnhance, setFaceEnhance] = useState(false);
@@ -84,7 +84,7 @@ const Index = () => {
     let alive = true;
     fetch("/api/models")
       .then(r => r.json())
-      .then((d: { models?: { id: string; label: string }[]; faceEnhanceAvailable?: boolean; faceEnhanceReason?: string | null }) => {
+      .then((d: { models?: { id: string; label: string; nativeScale?: number }[]; faceEnhanceAvailable?: boolean; faceEnhanceReason?: string | null }) => {
         if (!alive) return;
         const list = d.models ?? [];
         setModels(list);
@@ -259,12 +259,16 @@ const Index = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="0">Auto</SelectItem>
+                    <SelectItem value="2048">2048 – fastest, most VRAM</SelectItem>
+                    <SelectItem value="1024">1024 – faster</SelectItem>
                     <SelectItem value="512">512 – less VRAM</SelectItem>
                     <SelectItem value="256">256 – least VRAM</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground font-light">
-                  Kisebb csempe kevesebb GPU-memóriát használ, cserébe lassabb.
+                  Auto: a bináris dönt a szabad VRAM alapján. Nagyobb csempe kevesebb
+                  darabolást és gyorsabb futást jelent, de több GPU-memóriát kér — ha
+                  elfogy, a futás hibára fut, olyankor válassz kisebbet.
                 </p>
               </div>
 
