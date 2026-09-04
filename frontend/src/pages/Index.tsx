@@ -258,17 +258,15 @@ const Index = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="0">Auto</SelectItem>
-                    <SelectItem value="2048">2048 – fastest, most VRAM</SelectItem>
-                    <SelectItem value="1024">1024 – faster</SelectItem>
+                    <SelectItem value="0">Auto (ajánlott)</SelectItem>
                     <SelectItem value="512">512 – less VRAM</SelectItem>
                     <SelectItem value="256">256 – least VRAM</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground font-light">
-                  Auto: a bináris dönt a szabad VRAM alapján. Nagyobb csempe kevesebb
-                  darabolást és gyorsabb futást jelent, de több GPU-memóriát kér — ha
-                  elfogy, a futás hibára fut, olyankor válassz kisebbet.
+                  Auto: a bináris a szabad VRAM alapján dönt, és általában eltalálja.
+                  Kisebb csempe kevesebb memóriát kér, cserébe lassabb. Ha elfogy a
+                  memória, a nagyítás fekete képet ad — ezt a szerver felismeri és jelzi.
                 </p>
               </div>
 

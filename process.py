@@ -135,6 +135,22 @@ def native_scale(model_name: str) -> int:
     return int(m.group(1)) if m else 4
 
 
+def _looks_blank(path) -> bool:
+    """
+    Igaz, ha a kep gyakorlatilag teljesen fekete. A ncnn binaris NEM hibazik,
+    ha elfogy a GPU-memoria (pl. tul nagy csempemeret): nulla kilepesi koddal
+    fut le, es fekete kepet ir ki. Ezt csak a kimenet megnezesevel lehet elkapni.
+    """
+    if Image is None:
+        return False
+    try:
+        with Image.open(path) as im:
+            extrema = im.convert("RGB").getextrema()
+        return all(hi <= 2 for _lo, hi in extrema)
+    except Exception:
+        return False
+
+
 def run_realesrgan(input_path, output_path, scale=4, model_name="realesrgan-x4plus", tile=0):
     """
     Felnagyítja a képet. Visszaadja: (ok: bool, error: str | None).
@@ -184,6 +200,14 @@ def run_realesrgan(input_path, output_path, scale=4, model_name="realesrgan-x4pl
     if not os.path.exists(output_path):
         _log(f"realesrgan reported success but produced no file: {output_path}")
         return False, "Az upscaler lefutott, de nem jött létre kimeneti fájl."
+
+    # Fekete kimenet: a binaris sikert jelez, de elfogyott a GPU-memoria.
+    # Csak akkor hiba, ha a bemenet maga nem fekete.
+    if _looks_blank(output_path) and not _looks_blank(input_path):
+        _log(f"blank output detected for {output_path} (tile={tile}) - likely out of GPU memory")
+        hint = (f"csempemeret {tile}" if tile else "az automatikus csempemeret")
+        return False, (f"A kimenet ures lett - valoszinuleg elfogyott a GPU-memoria "
+                       f"({hint}). Probald kisebb csempemerettel, vagy allitsd Auto-ra.")
 
     # 3) Ha a kert arany kisebb a modell sajat aranyanal, kicsinyitunk ra
     if Image is not None and scale != run_scale:
