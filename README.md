@@ -44,7 +44,15 @@ process output.
 - **`storage.py`** — deletes batch directories older than the retention window, so `uploads/`
   and `outputs/` do not grow without bound.
 
-Supported models: `realesrgan-x4plus`, `realesrgan-x4plus-anime`, `realesrnet-x4plus`.
+The model list in the UI comes from `GET /api/models`, which reports the `.param` files actually
+present in `realesrgan/models/`. The upstream ncnn release ships `realesrgan-x4plus`,
+`realesrgan-x4plus-anime` and the `realesr-animevideov3-x2/x3/x4` set. **`realesrnet-x4plus` is not
+part of it** — it exists only as a PyTorch weight in the main Real-ESRGAN repo, so it cannot be
+offered here.
+
+Every model has a native ratio (`realesrgan-x4plus` is 4x). The binary is always run at that ratio
+and the result is resized down when a smaller one is requested, because passing a ratio the model
+was not trained for returns the image split into squares and reassembled wrong.
 
 ### Errors are reported, not hidden
 
@@ -95,6 +103,13 @@ place them in `realesrgan/` and `gfpgan/`:
 
 - Real-ESRGAN ncnn Vulkan — https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan
 - GFPGAN ncnn Vulkan — https://github.com/onuralpszr/GFPGAN-ncnn-vulkan
+  (the weights are a separate download: the `GFPGAN-ncnn-models.zip` asset on the
+  `v0.0.1-models` release, extracted into `gfpgan/models/`)
+
+The GFPGAN executable ships without the DLLs it needs. Rather than duplicating them, the backend
+puts both binary directories on `PATH` when it starts a subprocess, so the exe in `gfpgan/` finds
+`opencv_world4120.dll` next to the Real-ESRGAN binary. Face enhancement is disabled in the UI, with
+the reason on hover, whenever the weights are missing.
 
 If OpenCV DLLs live outside the project, point `OPENCV_BIN` at the directory containing them
 before starting the server.
