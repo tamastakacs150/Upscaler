@@ -21,6 +21,7 @@ outputs/
 *.dll
 realesrgan/models/
 gfpgan/models/
+gfpgan/
 
 # Windows
 *.lnk
